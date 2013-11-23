@@ -1,4 +1,11 @@
-import sys
+#! /usr/bin/python
+
+import sys, argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--debug', help='turn on debug mode', action='store_true')
+parser.add_argument('bffile')
+args = parser.parse_args()
 
 try:
 	input = raw_input
@@ -11,22 +18,44 @@ def makebracemap(code):
 		if operator == '[':
 			bracestack.append(position)
 		elif operator == ']':
-			openbrace = bracestack.pop()
+			try:
+				openbrace = bracestack.pop()
+			except IndexError:
+				bracemap[-1] = -1
+				return bracemap
 			bracemap[openbrace], bracemap[position] = position, openbrace
+	if bracestack:
+		bracemap[-1] = -1
 	return bracemap
 
-def printcode(code, codeptr, s):
-	print (''.join(code), '  |  ', s)
-	print (''.join([' ' for x in range(codeptr-2)]), '^')
+def debugcode(code, codeptr, arrdata):
+	print ('Data at arrayptr: %s') % arrdata
+	print (''.join(code))
+	print (''.join([' ' for x in range(codeptr)]) +  '^\n')
 
-def execute(code):
-	inputstring = input('Enter input string: ')
+def execute(code, debug):
 	bracemap = makebracemap(code)
+	try:
+		if bracemap[-1] == -1:
+			print ('SyntaxError: [ and ] mismatch')
+			return
+	except KeyError:
+		pass
+
+	inputstring = input('Enter input string: ')
+	mininplen = len([x for x in code if x == ','])
+	if len(inputstring) < mininplen:
+		print ('Input string too short. Required length: %d') % mininplen
+		return
 
 	array, arrayptr, codeptr, inputptr = [0], 0, 0, 0
 
+	if debug:
+		outputstring = ''
+
 	while codeptr < len(code):
-		# printcode(code, codeptr, array[arrayptr])
+		if debug:
+			debugcode(code, codeptr, chr(array[arrayptr]))
 		operator = code[codeptr]
 
 		if operator == '>':
@@ -48,7 +77,8 @@ def execute(code):
 			inputptr += 1
 
 		elif operator == '.':
-			sys.stdout.write(chr(array[arrayptr]))
+			if debug: outputstring += chr(array[arrayptr])
+			else: sys.stdout.write(chr(array[arrayptr]))
 
 		elif operator == '[' and array[arrayptr] == 0:
 			codeptr = bracemap[codeptr]
@@ -57,14 +87,17 @@ def execute(code):
 			codeptr = bracemap[codeptr]
 
 		codeptr += 1
+	if debug: print (outputstring)
+	else: print ('')
 
 def main():
-	if len(sys.argv) == 2:
-		with open(sys.argv[1], 'r') as f:
+	try:
+		with open(args.bffile, 'r') as f:
 			code = f.read()
-			execute([x for x in list(code) if x in ',.<>+-[]'])
-	else:
-		print ("Usage: python %s filename") % (sys.argv[0])
+			code = [x for x in list(code) if x in ',.<>+-[]']
+		execute(code, debug=args.debug)
+	except IOError:
+		print ('No such file or directory: \'%s\'') % args.bffile
 
 if __name__ == '__main__':
 	main()
