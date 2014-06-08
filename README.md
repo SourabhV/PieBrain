@@ -1,4 +1,4 @@
-PieBrain
+pybf
 ========
 
 BrainFuck interpreter in Python

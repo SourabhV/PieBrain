@@ -1,6 +1,7 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
-import sys, argparse
+import argparse
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--debug', help='turn on debug mode', action='store_true')
@@ -97,7 +98,7 @@ def main():
 			code = [x for x in list(code) if x in ',.<>+-[]']
 		execute(code, debug=args.debug)
 	except IOError:
-		print ('No such file or directory: \'%s\'') % args.bffile
+		print ("No such file or directory: '%s'") % args.bffile
 
 if __name__ == '__main__':
 	main()
